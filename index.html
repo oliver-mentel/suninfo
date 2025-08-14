@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sun Info in Zurich</title>
+    <link href="https://fonts.googleapis.com/css?family=Inter:400,700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #f5f7fa;
+            color: #222;
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 24px;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(25, 118, 210, 0.08);
+        }
+
+        h1 {
+            color: #1976d2;
+            font-size: 2em;
+            margin-bottom: 18px;
+            font-weight: 700;
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .label {
+            color: #1976d2;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .value {
+            color: #222;
+            font-size: 1em;
+            font-weight: 400;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 24px 0;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌅 Sun Info in Zurich</h1>
+    <div class="section">
+        <div class="row"><span class="label">Today's date:</span> <span id="today" class="value"></span></div>
+        <div class="row"><span class="label">Sunrise:</span> <span id="sunrise" class="value"></span></div>
+        <div class="row"><span class="label">Sunset:</span> <span id="sunset" class="value"></span></div>
+        <div class="row"><span class="label">Day length:</span> <span id="duration" class="value"></span></div>
+    </div>
+    <hr>
+    <div class="section">
+        <div class="row"><span class="label">Same sunset time (+/- 1 min) also occurred on:</span> <span id="matchSunsetDate"
+                                                                                                         class="value"></span></div>
+        <div class="row"><span class="label">Sunset:</span> <span id="matchSunsetSunset" class="value"></span></div>
+    </div>
+    <hr>
+    <div class="section">
+        <div class="row"><span class="label">Same sunrise time (+/- 1 min) also occurred on:</span> <span id="matchSunriseDate"
+                                                                                                          class="value"></span></div>
+        <div class="row"><span class="label">Sunrise:</span> <span id="matchSunriseSunrise" class="value"></span></div>
+    </div>
+</div>
+<script>
+    const lat = 47.3769;
+    const lng = 8.5417;
+    const tzid = "Europe/Zurich";
+    const formatted = 0;
+    const apiBase = "https://api.sunrise-sunset.org/json";
+    const now = new Date();
+    const thisYear = now.getFullYear();
+    const lastYear = thisYear - 1;
+    const startDate = new Date(`${lastYear}-12-21`);
+    const endDate = new Date(`${thisYear}-06-21`);
+
+    function formatTime(isoStr) {
+        const date = new Date(isoStr);
+        return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function formatDate(isoStr) {
+        const date = new Date(isoStr);
+        return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
+    }
+
+    function formatDuration(seconds) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    async function fetchSunData(date) {
+        const url = `${apiBase}?lat=${lat}&lng=${lng}&date=${date}&formatted=${formatted}&tzid=${tzid}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.results;
+    }
+
+    function parseTimeToMinutes(isoTimeStr) {
+        const date = new Date(isoTimeStr);
+        return date.getHours() * 60 + date.getMinutes();
+    }
+
+    // Prefetch and cache all sun data for the range
+    async function cacheAllSunData() {
+        let data = {};
+        let date = new Date(endDate);
+        while (date >= startDate) {
+            const dateStr = date.toISOString().split("T")[0];
+            data[dateStr] = await fetchSunData(dateStr);
+            date.setDate(date.getDate() - 1);
+        }
+        // dynamically cache the sun data of the current year
+        const currentYear = new Date().getFullYear();
+        localStorage.setItem(`sunData${currentYear}`, JSON.stringify(data));
+        return data;
+    }
+
+    async function getAllSunData() {
+        // Check if data for the current year is already cached
+        let cached = localStorage.getItem(`sunData${thisYear}`);
+        if (cached) {
+            return JSON.parse(cached);
+        } else {
+            return await cacheAllSunData();
+        }
+    }
+
+    // Search for matching date in cached data
+    function findMatchingDateLocal(allData, targetTime, type = "sunset") {
+        const targetMinutes = parseTimeToMinutes(targetTime);
+        for (const [dateStr, sunData] of Object.entries(allData)) {
+            const compareMinutes = parseTimeToMinutes(sunData[type]);
+            if (Math.abs(compareMinutes - targetMinutes) <= 1) {
+                return {date: dateStr, data: sunData};
+            }
+        }
+        return null;
+    }
+
+    async function displaySunInfo() {
+        document.getElementById("today").textContent = "Loading...";
+        document.getElementById("sunrise").textContent = "";
+        document.getElementById("sunset").textContent = "";
+        document.getElementById("duration").textContent = "";
+
+        const today = new Date().toISOString().split("T")[0];
+        const todayData = await fetchSunData(today);
+
+        document.getElementById("today").textContent = formatDate(todayData.sunset);
+        document.getElementById("sunrise").textContent = formatTime(todayData.sunrise);
+        document.getElementById("sunset").textContent = formatTime(todayData.sunset);
+        document.getElementById("duration").textContent = formatDuration(todayData.day_length);
+
+        // Load all sun data (from cache or API)
+        const allData = await getAllSunData();
+
+        // Find matches locally
+        const matchSunset = findMatchingDateLocal(allData, todayData.sunset, "sunset");
+        if (matchSunset) {
+            document.getElementById("matchSunsetDate").textContent = formatDate(matchSunset.data.sunset);
+            document.getElementById("matchSunsetSunset").textContent = formatTime(matchSunset.data.sunset);
+        }
+
+        const matchSunrise = findMatchingDateLocal(allData, todayData.sunrise, "sunrise");
+        if (matchSunrise) {
+            document.getElementById("matchSunriseDate").textContent = formatDate(matchSunrise.data.sunrise);
+            document.getElementById("matchSunriseSunrise").textContent = formatTime(matchSunrise.data.sunrise);
+        }
+    }
+
+    displaySunInfo();
+</script>
+</body>
+</html>
