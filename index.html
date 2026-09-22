@@ -5,22 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sun Info in Zurich</title>
 <style>
-  :root { --blue:#1976d2; }
-  body{background:#f5f7fa;color:#222;font-family:'Inter','Segoe UI',Arial,sans-serif;margin:0;padding:0}
-  .container{max-width:560px;margin:40px auto;padding:24px;background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(25,118,210,.08)}
+  :root{--blue:#1976d2}
+  *{box-sizing:border-box}
+  body{background:#f5f7fa;color:#222;font-family:'Inter','Segoe UI',Arial,sans-serif;margin:0}
+  .container{max-width:580px;margin:40px auto;padding:24px;background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(25,118,210,.08)}
   h1{color:var(--blue);font-size:2em;margin:0 0 18px;font-weight:700}
-  h2{color:var(--blue);font-size:1.05em;margin:0 0 10px;font-weight:600}
-  .section{margin-bottom:28px}
-  .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:10px 0}
-  .label{color:var(--blue);font-weight:600;font-size:1em}
-  .value{font-size:1em;font-variant-numeric:tabular-nums;text-align:right}
-  .hint{color:#667;font-size:.82em;margin-top:6px;line-height:1.45}
-  hr{border:none;border-top:1px solid #e0e0e0;margin:24px 0}
-  .modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-  .modes label{font-size:.85em;background:#eef4fb;border-radius:999px;padding:6px 12px;cursor:pointer;user-select:none}
-  .modes input{margin-right:6px}
-  .badge{display:inline-block;font-size:.75em;background:#e8f5e9;color:#256029;border-radius:999px;padding:2px 8px;margin-left:6px}
+  h2{color:var(--blue);font-size:1.05em;margin:0 0 4px;font-weight:600}
+  .section{margin-bottom:26px}
+  .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:9px 0}
+  .label{color:var(--blue);font-weight:600}
+  .value{font-variant-numeric:tabular-nums;text-align:right}
+  .hint{color:#667;font-size:.82em;line-height:1.5;margin-top:8px}
+  hr{border:none;border-top:1px solid #e0e0e0;margin:22px 0}
+  .badge{display:inline-block;font-size:.72em;border-radius:999px;padding:2px 8px;margin-left:6px;background:#e8f5e9;color:#256029;white-space:nowrap}
   .badge.warn{background:#fff4e5;color:#8a5200}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:.85em}
+  td{padding:4px 0;border-top:1px solid #eef1f5;font-variant-numeric:tabular-nums}
+  td:last-child{text-align:right;color:#667}
+  .picker{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  input[type=date]{font:inherit;font-size:.95em;padding:8px 10px;border:1px solid #cfd8e3;border-radius:10px;background:#fff;color:#222;flex:1;min-width:150px}
+  button{font:inherit;font-size:.9em;padding:8px 12px;border:1px solid #cfd8e3;background:#fff;border-radius:10px;cursor:pointer;color:#1976d2;font-weight:600}
+  button:hover{background:#eef4fb}
+  button:active{transform:translateY(1px)}
+  .ctl{display:flex;align-items:center;gap:10px;font-size:.85em;color:#445}
+  input[type=range]{flex:1}
   .perf{color:#889;font-size:.75em;text-align:right}
   @media (max-width:600px){.container{margin:0;border-radius:0;padding:16px}h1{font-size:1.4em}}
 </style>
@@ -29,30 +37,41 @@
 <div class="container">
   <h1>&#127749; Sun Info in Zurich</h1>
 
+  <div class="picker">
+    <button id="prev" title="Previous day">&#8592;</button>
+    <input type="date" id="date">
+    <button id="next" title="Next day">&#8594;</button>
+    <button id="todayBtn">Today</button>
+  </div>
+
   <div class="section">
-    <div class="row"><span class="label">Today's date:</span><span id="today" class="value">&hellip;</span></div>
+    <div class="row"><span class="label">Selected date:</span><span id="selDate" class="value">&hellip;</span></div>
     <div class="row"><span class="label">Sunrise:</span><span id="sunrise" class="value"></span></div>
     <div class="row"><span class="label">Sunset:</span><span id="sunset" class="value"></span></div>
     <div class="row"><span class="label">Day length:</span><span id="duration" class="value"></span></div>
   </div>
 
-  <div class="modes">
-    <label><input type="radio" name="mode" value="solar" checked>DST-neutral (true sun twin)</label>
-    <label><input type="radio" name="mode" value="clock">Wall-clock time</label>
+  <div class="ctl">
+    <label for="win">Ignore dates within&nbsp;&plusmn;<b id="winVal">30</b>&nbsp;days</label>
+    <input type="range" id="win" min="3" max="90" value="30" step="1">
   </div>
-  <div class="hint">Switzerland shifts the clock by 1&nbsp;hour in spring/autumn, so some wall-clock sunset times never occur in the other half of the year. The DST-neutral mode compares real solar times and therefore always finds a twin date.</div>
+  <div class="hint">All comparisons use <b>wall-clock time</b>. Near the solstices the curve is almost flat, so twins naturally sit close to the selected date &ndash; lower the window there.</div>
 
   <hr>
   <div class="section">
-    <h2>&#127751; Same sunset time also occurs on</h2>
+    <h2>&#127751; Closest sunset in the same year</h2>
     <div class="row"><span class="label">Date:</span><span id="setDate" class="value"></span></div>
     <div class="row"><span class="label">Sunset there:</span><span id="setTime" class="value"></span></div>
+    <div class="hint" id="setNote"></div>
+    <table id="setAlt"></table>
   </div>
 
   <div class="section">
-    <h2>&#127750; Same sunrise time also occurs on</h2>
+    <h2>&#127750; Closest sunrise in the same year</h2>
     <div class="row"><span class="label">Date:</span><span id="riseDate" class="value"></span></div>
     <div class="row"><span class="label">Sunrise there:</span><span id="riseTime" class="value"></span></div>
+    <div class="hint" id="riseNote"></div>
+    <table id="riseAlt"></table>
   </div>
 
   <div class="perf" id="perf"></div>
@@ -62,159 +81,193 @@
 (() => {
   "use strict";
 
-  /* ---------- config ---------- */
   const LAT = 47.3769, LNG = 8.5417, TZ = "Europe/Zurich";
-  const ZENITH = 90.833;      // sun's upper limb + refraction
-  const EXCLUDE_DAYS = 10;    // ignore neighbouring days (they trivially match)
-  const TOLERANCE = 1;        // minutes, for the "exact match" badge
+  const ZENITH = 90.833;   // sun's upper limb + atmospheric refraction
+  const EXACT = 1;         // minutes still counted as an exact twin
 
-  /* ---------- NOAA solar position math (no network needed) ---------- */
+  /* ---------- NOAA solar algorithm (no network calls) ---------- */
   const RAD = Math.PI / 180, DEG = 180 / Math.PI;
-
   const julianDay = (y, m, d) => {
     if (m <= 2) { y -= 1; m += 12; }
     const A = Math.floor(y / 100), B = 2 - A + Math.floor(A / 4);
     return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
   };
-  const cent      = jd => (jd - 2451545) / 36525;
-  const meanLong  = t => ((280.46646 + t * (36000.76983 + t * 3.032e-4)) % 360 + 360) % 360;
-  const meanAnom  = t => 357.52911 + t * (35999.05029 - 1.537e-4 * t);
-  const eccent    = t => 0.016708634 - t * (4.2037e-5 + 1.267e-7 * t);
-  const center    = t => { const m = meanAnom(t) * RAD;
+  const cent     = jd => (jd - 2451545) / 36525;
+  const meanLong = t => ((280.46646 + t * (36000.76983 + t * 3.032e-4)) % 360 + 360) % 360;
+  const meanAnom = t => 357.52911 + t * (35999.05029 - 1.537e-4 * t);
+  const eccent   = t => 0.016708634 - t * (4.2037e-5 + 1.267e-7 * t);
+  const center   = t => { const m = meanAnom(t) * RAD;
     return Math.sin(m) * (1.914602 - t * (0.004817 + 1.4e-5 * t))
-         + Math.sin(2 * m) * (0.019993 - 1.01e-4 * t)
-         + Math.sin(3 * m) * 2.89e-4; };
-  const appLong   = t => meanLong(t) + center(t) - 0.00569 - 0.00478 * Math.sin((125.04 - 1934.136 * t) * RAD);
-  const obliquity = t => 23 + (26 + (21.448 - t * (46.815 + t * (5.9e-4 - t * 0.001813))) / 60) / 60
-                          + 0.00256 * Math.cos((125.04 - 1934.136 * t) * RAD);
-  const declin    = t => Math.asin(Math.sin(obliquity(t) * RAD) * Math.sin(appLong(t) * RAD)) * DEG;
-  const eqTime    = t => { const y = Math.tan(obliquity(t) * RAD / 2) ** 2,
-                                 L = meanLong(t) * RAD, m = meanAnom(t) * RAD, e = eccent(t);
+         + Math.sin(2 * m) * (0.019993 - 1.01e-4 * t) + Math.sin(3 * m) * 2.89e-4; };
+  const appLong  = t => meanLong(t) + center(t) - 0.00569 - 0.00478 * Math.sin((125.04 - 1934.136 * t) * RAD);
+  const obliq    = t => 23 + (26 + (21.448 - t * (46.815 + t * (5.9e-4 - t * 0.001813))) / 60) / 60
+                         + 0.00256 * Math.cos((125.04 - 1934.136 * t) * RAD);
+  const declin   = t => Math.asin(Math.sin(obliq(t) * RAD) * Math.sin(appLong(t) * RAD)) * DEG;
+  const eqTime   = t => { const y = Math.pow(Math.tan(obliq(t) * RAD / 2), 2),
+                                L = meanLong(t) * RAD, m = meanAnom(t) * RAD, e = eccent(t);
     return 4 * DEG * (y * Math.sin(2 * L) - 2 * e * Math.sin(m) + 4 * e * y * Math.sin(m) * Math.cos(2 * L)
-                      - 0.5 * y * y * Math.sin(4 * L) - 1.25 * e * e * Math.sin(2 * m)); };
+                    - 0.5 * y * y * Math.sin(4 * L) - 1.25 * e * e * Math.sin(2 * m)); };
 
-  const hourAngle = (lat, dec, rising) => {
-    const la = lat * RAD, d = dec * RAD;
+  const hourAngle = (dec, rising) => {
+    const la = LAT * RAD, d = dec * RAD;
     const cosH = Math.cos(ZENITH * RAD) / (Math.cos(la) * Math.cos(d)) - Math.tan(la) * Math.tan(d);
     if (cosH < -1 || cosH > 1) return null;              // polar day / night
     const h = Math.acos(cosH) * DEG;
     return rising ? h : -h;
   };
-
-  /** minutes after 00:00 UTC of the event, 2 iterations = sub-minute accuracy */
-  const eventUTC = (jd, rising) => {
-    let minutes = null;
-    for (let i = 0; i < 2; i++) {
-      const t = cent(jd + (minutes === null ? 0.5 : minutes / 1440));
-      const h = hourAngle(LAT, declin(t), rising);
+  const eventUTC = (jd, rising) => {                      // minutes after 00:00 UTC
+    let mins = null;
+    for (let i = 0; i < 3; i++) {
+      const t = cent(jd + (mins === null ? 0.5 : mins / 1440));
+      const h = hourAngle(declin(t), rising);
       if (h === null) return null;
-      minutes = 720 + 4 * (-LNG - h) - eqTime(t);
+      mins = 720 + 4 * (-LNG - h) - eqTime(t);
     }
-    return minutes;
+    return mins;
   };
 
-  /* ---------- timezone handling (one cached formatter, no Date parsing) ---------- */
-  const tzParts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false
-  });
-  const localMinutes = ts => {                            // UTC ms -> local minutes of day
-    const [h, m] = tzParts.format(ts).split(":");
+  /* ---------- wall-clock conversion (one cached formatter) ---------- */
+  const fmt = new Intl.DateTimeFormat("en-GB",
+    { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
+  const wallMinutes = ts => {
+    const [h, m] = fmt.format(ts).split(":");
     return (+h % 24) * 60 + +m;
   };
 
-  /* ---------- build the whole year in one pass ---------- */
-  function buildYear(year) {
-    const days = [];
+  /* ---------- year builder with memo cache ---------- */
+  const yearCache = new Map();
+  let lastBuildMs = 0, lastBuildYear = null;
+
+  function getYear(year) {
+    if (yearCache.has(year)) return yearCache.get(year);
+    const t0 = performance.now();
+    const out = [];
     for (let month = 0; month < 12; month++) {
-      const inMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-      for (let d = 1; d <= inMonth; d++) {
-        const base = Date.UTC(year, month, d);
-        const jd = julianDay(year, month + 1, d);
-        const rUTC = eventUTC(jd, true), sUTC = eventUTC(jd, false);
-        if (rUTC === null || sUTC === null) { days.push(null); continue; }
-        const rise = localMinutes(base + rUTC * 60000);
-        const set  = localMinutes(base + sUTC * 60000);
-        // UTC offset of that day (minutes) -> lets us strip the DST hour
-        const offset = Math.round(rise - rUTC);
-        days.push({
-          key: `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+      const len = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+      for (let d = 1; d <= len; d++) {
+        const base = Date.UTC(year, month, d), jd = julianDay(year, month + 1, d);
+        const r = eventUTC(jd, true), s = eventUTC(jd, false);
+        if (r === null || s === null) continue;
+        out.push({
           y: year, m: month + 1, d,
-          rise, set,
-          dayLength: Math.round(sUTC - rUTC),
-          offset
+          rise: wallMinutes(base + r * 60000),
+          set:  wallMinutes(base + s * 60000),
+          dayLength: Math.round(s - r)
         });
       }
     }
-    const stdOffset = Math.min(...days.filter(Boolean).map(x => x.offset));  // 60 for CET
-    for (const x of days) if (x) {                        // DST-neutral (standard-time) values
-      const shift = x.offset - stdOffset;
-      x.riseSolar = x.rise - shift;
-      x.setSolar  = x.set  - shift;
-    }
-    return days;
+    lastBuildMs = performance.now() - t0;
+    lastBuildYear = year;
+    yearCache.set(year, out);
+    return out;
   }
 
-  /* ---------- matching: search the FULL year, both directions ---------- */
-  function findTwin(days, todayIdx, field) {
-    const target = days[todayIdx][field];
-    const n = days.length;
-    let best = null;
+  /* ---------- ranking: pure wall-clock distance, wrap-aware window ---------- */
+  function ranked(days, idx, field, window) {
+    const target = days[idx][field], n = days.length, list = [];
     for (let i = 0; i < n; i++) {
-      const cand = days[i];
-      if (!cand) continue;
-      const gap = Math.abs(i - todayIdx);
-      if (Math.min(gap, n - gap) <= EXCLUDE_DAYS) continue;   // skip today & neighbours (wrap-aware)
-      const diff = Math.abs(cand[field] - target);
-      if (!best || diff < best.diff) { best = { day: cand, diff }; if (diff === 0) break; }
+      const gap = Math.abs(i - idx);
+      const away = Math.min(gap, n - gap);
+      if (away <= window) continue;
+      list.push({ day: days[i], diff: Math.abs(days[i][field] - target), away });
     }
-    return best;
+    list.sort((a, b) => a.diff - b.diff || b.away - a.away);
+    return list;
+  }
+
+  /* size of the biggest jump in this field = the DST discontinuity */
+  function gapSize(days, field) {
+    let max = 0;
+    for (let i = 1; i < days.length; i++) {
+      const jump = Math.abs(days[i][field] - days[i - 1][field]);
+      if (jump > max) max = jump;
+    }
+    return Math.max(0, max - 3);
   }
 
   /* ---------- formatting ---------- */
   const p2 = n => String(n).padStart(2, "0");
-  const hhmm = mins => `${p2(Math.floor(((mins % 1440) + 1440) % 1440 / 60))}:${p2(Math.round(mins) % 60)}`;
+  const hhmm = mins => { const v = ((Math.round(mins) % 1440) + 1440) % 1440;
+                         return `${p2(Math.floor(v / 60))}:${p2(v % 60)}`; };
   const dmy = x => `${p2(x.d)}.${p2(x.m)}.${x.y}`;
-  const weekday = x => new Date(Date.UTC(x.y, x.m - 1, x.d))
-    .toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" });
+  const wd  = x => new Date(Date.UTC(x.y, x.m - 1, x.d))
+                   .toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" });
 
-  /* ---------- render ---------- */
+  /* ---------- DOM ---------- */
   const $ = id => document.getElementById(id);
-  const t0 = performance.now();
-  const now = new Date();
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" })
-    .format(now).split("-").map(Number);
-  const [year, month, day] = parts;
-  const days = buildYear(year);
-  const todayIdx = days.findIndex(x => x && x.m === month && x.d === day);
-  const today = days[todayIdx];
-  const buildMs = performance.now() - t0;
+  const todayParts = () => new Intl.DateTimeFormat("en-CA",
+    { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(new Date()).split("-").map(Number);
+
+  const shiftDate = delta => {
+    const [y, m, d] = $("date").value.split("-").map(Number);
+    const nd = new Date(Date.UTC(y, m - 1, d + delta));
+    $("date").value = `${nd.getUTCFullYear()}-${p2(nd.getUTCMonth() + 1)}-${p2(nd.getUTCDate())}`;
+    render();
+  };
 
   function render() {
-    const solar = document.querySelector('input[name="mode"]:checked').value === "solar";
-    const riseField = solar ? "riseSolar" : "rise";
-    const setField  = solar ? "setSolar"  : "set";
+    const raw = $("date").value;
+    if (!raw) return;
+    const [year, month, day] = raw.split("-").map(Number);
+    const window = +$("win").value;
+    $("winVal").textContent = window;
 
-    $("today").textContent    = `${dmy(today)} (${weekday(today)})`;
-    $("sunrise").textContent  = hhmm(today.rise);
-    $("sunset").textContent   = hhmm(today.set);
-    $("duration").textContent = `${hhmm(today.dayLength)} h`;
+    const days = getYear(year);
+    const idx = days.findIndex(x => x.m === month && x.d === day);
+    if (idx === -1) return;
+    const sel = days[idx];
 
-    for (const [field, dateEl, timeEl, realField] of [
-      [setField,  "setDate",  "setTime",  "set"],
-      [riseField, "riseDate", "riseTime", "rise"]
-    ]) {
-      const twin = findTwin(days, todayIdx, field);
-      if (!twin) { $(dateEl).textContent = "—"; $(timeEl).textContent = "—"; continue; }
-      const exact = twin.diff <= TOLERANCE;
-      $(dateEl).innerHTML = `${dmy(twin.day)} (${weekday(twin.day)})` +
-        `<span class="badge${exact ? "" : " warn"}">${exact ? "±" + twin.diff + " min" : "closest: Δ" + twin.diff + " min"}</span>`;
-      $(timeEl).textContent = hhmm(twin.day[realField]) +
-        (solar && twin.day.offset !== today.offset ? "  (local clock, 1 h DST shift)" : "");
-    }
-    $("perf").textContent = `${days.filter(Boolean).length} days computed locally in ${buildMs.toFixed(1)} ms — 0 network requests`;
+    $("selDate").textContent  = `${dmy(sel)} (${wd(sel)})`;
+    $("sunrise").textContent  = hhmm(sel.rise);
+    $("sunset").textContent   = hhmm(sel.set);
+    $("duration").textContent = `${hhmm(sel.dayLength)} h`;
+
+    [["set", "setDate", "setTime", "setNote", "setAlt", "sunset"],
+     ["rise", "riseDate", "riseTime", "riseNote", "riseAlt", "sunrise"]
+    ].forEach(([field, dEl, tEl, nEl, aEl, word]) => {
+      const list = ranked(days, idx, field, window);
+      if (!list.length) {
+        $(dEl).textContent = "\u2014"; $(tEl).textContent = "\u2014";
+        $(nEl).textContent = "Window too large \u2013 no dates left to compare.";
+        $(aEl).innerHTML = ""; return;
+      }
+      const best = list[0], exact = best.diff <= EXACT;
+      $(dEl).innerHTML = `${dmy(best.day)} (${wd(best.day)})` +
+        `<span class="badge${exact ? "" : " warn"}">${exact ? "exact \u00b10 min" : "\u0394 " + best.diff + " min"}</span>`;
+      $(tEl).textContent = hhmm(best.day[field]);
+      $(nEl).textContent = exact
+        ? `Exact wall-clock twin, ${best.away} days apart.`
+        : `No exact twin in ${year}: the clock change skips a ${gapSize(days, field)}-minute range, `
+          + `so this ${word} time occurs only once. Closest possible date shown (${best.away} days apart).`;
+      $(aEl).innerHTML = list.slice(1, 4).map(c =>
+        `<tr><td>${dmy(c.day)} (${wd(c.day)})</td><td>${hhmm(c.day[field])}</td><td>\u0394 ${c.diff} min</td></tr>`
+      ).join("");
+    });
+
+    $("perf").textContent = `${days.length} days for ${year} computed locally` +
+      (lastBuildYear === year ? ` in ${lastBuildMs.toFixed(1)} ms` : " (cached)") +
+      " \u2014 0 network requests";
   }
 
-  document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener("change", render));
+  /* ---------- wiring ---------- */
+  const [ty, tm, td] = todayParts();
+  $("date").value = `${ty}-${p2(tm)}-${p2(td)}`;
+  $("date").addEventListener("change", render);
+  $("win").addEventListener("input", render);
+  $("prev").addEventListener("click", () => shiftDate(-1));
+  $("next").addEventListener("click", () => shiftDate(1));
+  $("todayBtn").addEventListener("click", () => {
+    const [y, m, d] = todayParts();
+    $("date").value = `${y}-${p2(m)}-${p2(d)}`;
+    render();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.target.tagName === "INPUT") return;
+    if (e.key === "ArrowLeft")  shiftDate(-1);
+    if (e.key === "ArrowRight") shiftDate(1);
+  });
+
   render();
 })();
 </script>
