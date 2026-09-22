@@ -1,205 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Sun Info in Zurich</title>
-    <link href="https://fonts.googleapis.com/css?family=Inter:400,700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            background: #f5f7fa;
-            color: #222;
-            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 500px;
-            margin: 40px auto;
-            padding: 24px;
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(25, 118, 210, 0.08);
-        }
-
-        h1 {
-            color: #1976d2;
-            font-size: 2em;
-            margin-bottom: 18px;
-            font-weight: 700;
-        }
-
-        .section {
-            margin-bottom: 32px;
-        }
-
-        .row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 10px 0;
-        }
-
-        .label {
-            color: #1976d2;
-            font-weight: 600;
-            font-size: 1em;
-        }
-
-        .value {
-            color: #222;
-            font-size: 1em;
-            font-weight: 400;
-        }
-
-        hr {
-            border: none;
-            border-top: 1px solid #e0e0e0;
-            margin: 24px 0;
-        }
-
-        @media (max-width: 600px) {
-            .container {
-                padding: 12px;
-            }
-
-            h1 {
-                font-size: 1.3em;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sun Info in Zurich</title>
+<style>
+  :root { --blue:#1976d2; }
+  body{background:#f5f7fa;color:#222;font-family:'Inter','Segoe UI',Arial,sans-serif;margin:0;padding:0}
+  .container{max-width:560px;margin:40px auto;padding:24px;background:#fff;border-radius:18px;box-shadow:0 4px 24px rgba(25,118,210,.08)}
+  h1{color:var(--blue);font-size:2em;margin:0 0 18px;font-weight:700}
+  h2{color:var(--blue);font-size:1.05em;margin:0 0 10px;font-weight:600}
+  .section{margin-bottom:28px}
+  .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:10px 0}
+  .label{color:var(--blue);font-weight:600;font-size:1em}
+  .value{font-size:1em;font-variant-numeric:tabular-nums;text-align:right}
+  .hint{color:#667;font-size:.82em;margin-top:6px;line-height:1.45}
+  hr{border:none;border-top:1px solid #e0e0e0;margin:24px 0}
+  .modes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .modes label{font-size:.85em;background:#eef4fb;border-radius:999px;padding:6px 12px;cursor:pointer;user-select:none}
+  .modes input{margin-right:6px}
+  .badge{display:inline-block;font-size:.75em;background:#e8f5e9;color:#256029;border-radius:999px;padding:2px 8px;margin-left:6px}
+  .badge.warn{background:#fff4e5;color:#8a5200}
+  .perf{color:#889;font-size:.75em;text-align:right}
+  @media (max-width:600px){.container{margin:0;border-radius:0;padding:16px}h1{font-size:1.4em}}
+</style>
 </head>
 <body>
 <div class="container">
-    <h1>🌅 Sun Info in Zurich</h1>
-    <div class="section">
-        <div class="row"><span class="label">Today's date:</span> <span id="today" class="value"></span></div>
-        <div class="row"><span class="label">Sunrise:</span> <span id="sunrise" class="value"></span></div>
-        <div class="row"><span class="label">Sunset:</span> <span id="sunset" class="value"></span></div>
-        <div class="row"><span class="label">Day length:</span> <span id="duration" class="value"></span></div>
-    </div>
-    <hr>
-    <div class="section">
-        <div class="row"><span class="label">Same sunset time (+/- 1 min) also occurred on:</span> <span id="matchSunsetDate"
-                                                                                                         class="value"></span></div>
-        <div class="row"><span class="label">Sunset:</span> <span id="matchSunsetSunset" class="value"></span></div>
-    </div>
-    <hr>
-    <div class="section">
-        <div class="row"><span class="label">Same sunrise time (+/- 1 min) also occurred on:</span> <span id="matchSunriseDate"
-                                                                                                          class="value"></span></div>
-        <div class="row"><span class="label">Sunrise:</span> <span id="matchSunriseSunrise" class="value"></span></div>
-    </div>
+  <h1>&#127749; Sun Info in Zurich</h1>
+
+  <div class="section">
+    <div class="row"><span class="label">Today's date:</span><span id="today" class="value">&hellip;</span></div>
+    <div class="row"><span class="label">Sunrise:</span><span id="sunrise" class="value"></span></div>
+    <div class="row"><span class="label">Sunset:</span><span id="sunset" class="value"></span></div>
+    <div class="row"><span class="label">Day length:</span><span id="duration" class="value"></span></div>
+  </div>
+
+  <div class="modes">
+    <label><input type="radio" name="mode" value="solar" checked>DST-neutral (true sun twin)</label>
+    <label><input type="radio" name="mode" value="clock">Wall-clock time</label>
+  </div>
+  <div class="hint">Switzerland shifts the clock by 1&nbsp;hour in spring/autumn, so some wall-clock sunset times never occur in the other half of the year. The DST-neutral mode compares real solar times and therefore always finds a twin date.</div>
+
+  <hr>
+  <div class="section">
+    <h2>&#127751; Same sunset time also occurs on</h2>
+    <div class="row"><span class="label">Date:</span><span id="setDate" class="value"></span></div>
+    <div class="row"><span class="label">Sunset there:</span><span id="setTime" class="value"></span></div>
+  </div>
+
+  <div class="section">
+    <h2>&#127750; Same sunrise time also occurs on</h2>
+    <div class="row"><span class="label">Date:</span><span id="riseDate" class="value"></span></div>
+    <div class="row"><span class="label">Sunrise there:</span><span id="riseTime" class="value"></span></div>
+  </div>
+
+  <div class="perf" id="perf"></div>
 </div>
+
 <script>
-    const lat = 47.3769;
-    const lng = 8.5417;
-    const tzid = "Europe/Zurich";
-    const formatted = 0;
-    const apiBase = "https://api.sunrise-sunset.org/json";
-    const now = new Date();
-    const thisYear = now.getFullYear();
-    const lastYear = thisYear - 1;
-    const startDate = new Date(`${lastYear}-12-21`);
-    const endDate = new Date(`${thisYear}-06-21`);
+(() => {
+  "use strict";
 
-    function formatTime(isoStr) {
-        const date = new Date(isoStr);
-        return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  /* ---------- config ---------- */
+  const LAT = 47.3769, LNG = 8.5417, TZ = "Europe/Zurich";
+  const ZENITH = 90.833;      // sun's upper limb + refraction
+  const EXCLUDE_DAYS = 10;    // ignore neighbouring days (they trivially match)
+  const TOLERANCE = 1;        // minutes, for the "exact match" badge
+
+  /* ---------- NOAA solar position math (no network needed) ---------- */
+  const RAD = Math.PI / 180, DEG = 180 / Math.PI;
+
+  const julianDay = (y, m, d) => {
+    if (m <= 2) { y -= 1; m += 12; }
+    const A = Math.floor(y / 100), B = 2 - A + Math.floor(A / 4);
+    return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + B - 1524.5;
+  };
+  const cent      = jd => (jd - 2451545) / 36525;
+  const meanLong  = t => ((280.46646 + t * (36000.76983 + t * 3.032e-4)) % 360 + 360) % 360;
+  const meanAnom  = t => 357.52911 + t * (35999.05029 - 1.537e-4 * t);
+  const eccent    = t => 0.016708634 - t * (4.2037e-5 + 1.267e-7 * t);
+  const center    = t => { const m = meanAnom(t) * RAD;
+    return Math.sin(m) * (1.914602 - t * (0.004817 + 1.4e-5 * t))
+         + Math.sin(2 * m) * (0.019993 - 1.01e-4 * t)
+         + Math.sin(3 * m) * 2.89e-4; };
+  const appLong   = t => meanLong(t) + center(t) - 0.00569 - 0.00478 * Math.sin((125.04 - 1934.136 * t) * RAD);
+  const obliquity = t => 23 + (26 + (21.448 - t * (46.815 + t * (5.9e-4 - t * 0.001813))) / 60) / 60
+                          + 0.00256 * Math.cos((125.04 - 1934.136 * t) * RAD);
+  const declin    = t => Math.asin(Math.sin(obliquity(t) * RAD) * Math.sin(appLong(t) * RAD)) * DEG;
+  const eqTime    = t => { const y = Math.tan(obliquity(t) * RAD / 2) ** 2,
+                                 L = meanLong(t) * RAD, m = meanAnom(t) * RAD, e = eccent(t);
+    return 4 * DEG * (y * Math.sin(2 * L) - 2 * e * Math.sin(m) + 4 * e * y * Math.sin(m) * Math.cos(2 * L)
+                      - 0.5 * y * y * Math.sin(4 * L) - 1.25 * e * e * Math.sin(2 * m)); };
+
+  const hourAngle = (lat, dec, rising) => {
+    const la = lat * RAD, d = dec * RAD;
+    const cosH = Math.cos(ZENITH * RAD) / (Math.cos(la) * Math.cos(d)) - Math.tan(la) * Math.tan(d);
+    if (cosH < -1 || cosH > 1) return null;              // polar day / night
+    const h = Math.acos(cosH) * DEG;
+    return rising ? h : -h;
+  };
+
+  /** minutes after 00:00 UTC of the event, 2 iterations = sub-minute accuracy */
+  const eventUTC = (jd, rising) => {
+    let minutes = null;
+    for (let i = 0; i < 2; i++) {
+      const t = cent(jd + (minutes === null ? 0.5 : minutes / 1440));
+      const h = hourAngle(LAT, declin(t), rising);
+      if (h === null) return null;
+      minutes = 720 + 4 * (-LNG - h) - eqTime(t);
     }
+    return minutes;
+  };
 
-    function formatDate(isoStr) {
-        const date = new Date(isoStr);
-        return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
+  /* ---------- timezone handling (one cached formatter, no Date parsing) ---------- */
+  const tzParts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false
+  });
+  const localMinutes = ts => {                            // UTC ms -> local minutes of day
+    const [h, m] = tzParts.format(ts).split(":");
+    return (+h % 24) * 60 + +m;
+  };
+
+  /* ---------- build the whole year in one pass ---------- */
+  function buildYear(year) {
+    const days = [];
+    for (let month = 0; month < 12; month++) {
+      const inMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+      for (let d = 1; d <= inMonth; d++) {
+        const base = Date.UTC(year, month, d);
+        const jd = julianDay(year, month + 1, d);
+        const rUTC = eventUTC(jd, true), sUTC = eventUTC(jd, false);
+        if (rUTC === null || sUTC === null) { days.push(null); continue; }
+        const rise = localMinutes(base + rUTC * 60000);
+        const set  = localMinutes(base + sUTC * 60000);
+        // UTC offset of that day (minutes) -> lets us strip the DST hour
+        const offset = Math.round(rise - rUTC);
+        days.push({
+          key: `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+          y: year, m: month + 1, d,
+          rise, set,
+          dayLength: Math.round(sUTC - rUTC),
+          offset
+        });
+      }
     }
-
-    function formatDuration(seconds) {
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const stdOffset = Math.min(...days.filter(Boolean).map(x => x.offset));  // 60 for CET
+    for (const x of days) if (x) {                        // DST-neutral (standard-time) values
+      const shift = x.offset - stdOffset;
+      x.riseSolar = x.rise - shift;
+      x.setSolar  = x.set  - shift;
     }
+    return days;
+  }
 
-    async function fetchSunData(date) {
-        const url = `${apiBase}?lat=${lat}&lng=${lng}&date=${date}&formatted=${formatted}&tzid=${tzid}`;
-        const response = await fetch(url);
-        const data = await response.json();
-        return data.results;
+  /* ---------- matching: search the FULL year, both directions ---------- */
+  function findTwin(days, todayIdx, field) {
+    const target = days[todayIdx][field];
+    const n = days.length;
+    let best = null;
+    for (let i = 0; i < n; i++) {
+      const cand = days[i];
+      if (!cand) continue;
+      const gap = Math.abs(i - todayIdx);
+      if (Math.min(gap, n - gap) <= EXCLUDE_DAYS) continue;   // skip today & neighbours (wrap-aware)
+      const diff = Math.abs(cand[field] - target);
+      if (!best || diff < best.diff) { best = { day: cand, diff }; if (diff === 0) break; }
     }
+    return best;
+  }
 
-    function parseTimeToMinutes(isoTimeStr) {
-        const date = new Date(isoTimeStr);
-        return date.getHours() * 60 + date.getMinutes();
+  /* ---------- formatting ---------- */
+  const p2 = n => String(n).padStart(2, "0");
+  const hhmm = mins => `${p2(Math.floor(((mins % 1440) + 1440) % 1440 / 60))}:${p2(Math.round(mins) % 60)}`;
+  const dmy = x => `${p2(x.d)}.${p2(x.m)}.${x.y}`;
+  const weekday = x => new Date(Date.UTC(x.y, x.m - 1, x.d))
+    .toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" });
+
+  /* ---------- render ---------- */
+  const $ = id => document.getElementById(id);
+  const t0 = performance.now();
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(now).split("-").map(Number);
+  const [year, month, day] = parts;
+  const days = buildYear(year);
+  const todayIdx = days.findIndex(x => x && x.m === month && x.d === day);
+  const today = days[todayIdx];
+  const buildMs = performance.now() - t0;
+
+  function render() {
+    const solar = document.querySelector('input[name="mode"]:checked').value === "solar";
+    const riseField = solar ? "riseSolar" : "rise";
+    const setField  = solar ? "setSolar"  : "set";
+
+    $("today").textContent    = `${dmy(today)} (${weekday(today)})`;
+    $("sunrise").textContent  = hhmm(today.rise);
+    $("sunset").textContent   = hhmm(today.set);
+    $("duration").textContent = `${hhmm(today.dayLength)} h`;
+
+    for (const [field, dateEl, timeEl, realField] of [
+      [setField,  "setDate",  "setTime",  "set"],
+      [riseField, "riseDate", "riseTime", "rise"]
+    ]) {
+      const twin = findTwin(days, todayIdx, field);
+      if (!twin) { $(dateEl).textContent = "—"; $(timeEl).textContent = "—"; continue; }
+      const exact = twin.diff <= TOLERANCE;
+      $(dateEl).innerHTML = `${dmy(twin.day)} (${weekday(twin.day)})` +
+        `<span class="badge${exact ? "" : " warn"}">${exact ? "±" + twin.diff + " min" : "closest: Δ" + twin.diff + " min"}</span>`;
+      $(timeEl).textContent = hhmm(twin.day[realField]) +
+        (solar && twin.day.offset !== today.offset ? "  (local clock, 1 h DST shift)" : "");
     }
+    $("perf").textContent = `${days.filter(Boolean).length} days computed locally in ${buildMs.toFixed(1)} ms — 0 network requests`;
+  }
 
-    // Prefetch and cache all sun data for the range
-    async function cacheAllSunData() {
-        let data = {};
-        let date = new Date(endDate);
-        while (date >= startDate) {
-            const dateStr = date.toISOString().split("T")[0];
-            data[dateStr] = await fetchSunData(dateStr);
-            date.setDate(date.getDate() - 1);
-        }
-        // dynamically cache the sun data of the current year
-        const currentYear = new Date().getFullYear();
-        localStorage.setItem(`sunData${currentYear}`, JSON.stringify(data));
-        return data;
-    }
-
-    async function getAllSunData() {
-        // Check if data for the current year is already cached
-        let cached = localStorage.getItem(`sunData${thisYear}`);
-        if (cached) {
-            return JSON.parse(cached);
-        } else {
-            return await cacheAllSunData();
-        }
-    }
-
-    // Search for matching date in cached data
-    function findMatchingDateLocal(allData, targetTime, type = "sunset") {
-        const targetMinutes = parseTimeToMinutes(targetTime);
-        for (const [dateStr, sunData] of Object.entries(allData)) {
-            const compareMinutes = parseTimeToMinutes(sunData[type]);
-            if (Math.abs(compareMinutes - targetMinutes) <= 1) {
-                return {date: dateStr, data: sunData};
-            }
-        }
-        return null;
-    }
-
-    async function displaySunInfo() {
-        document.getElementById("today").textContent = "Loading...";
-        document.getElementById("sunrise").textContent = "";
-        document.getElementById("sunset").textContent = "";
-        document.getElementById("duration").textContent = "";
-
-        const today = new Date().toISOString().split("T")[0];
-        const todayData = await fetchSunData(today);
-
-        document.getElementById("today").textContent = formatDate(todayData.sunset);
-        document.getElementById("sunrise").textContent = formatTime(todayData.sunrise);
-        document.getElementById("sunset").textContent = formatTime(todayData.sunset);
-        document.getElementById("duration").textContent = formatDuration(todayData.day_length);
-
-        // Load all sun data (from cache or API)
-        const allData = await getAllSunData();
-
-        // Find matches locally
-        const matchSunset = findMatchingDateLocal(allData, todayData.sunset, "sunset");
-        if (matchSunset) {
-            document.getElementById("matchSunsetDate").textContent = formatDate(matchSunset.data.sunset);
-            document.getElementById("matchSunsetSunset").textContent = formatTime(matchSunset.data.sunset);
-        }
-
-        const matchSunrise = findMatchingDateLocal(allData, todayData.sunrise, "sunrise");
-        if (matchSunrise) {
-            document.getElementById("matchSunriseDate").textContent = formatDate(matchSunrise.data.sunrise);
-            document.getElementById("matchSunriseSunrise").textContent = formatTime(matchSunrise.data.sunrise);
-        }
-    }
-
-    displaySunInfo();
+  document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener("change", render));
+  render();
+})();
 </script>
 </body>
 </html>
